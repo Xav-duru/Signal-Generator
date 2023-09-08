@@ -17,7 +17,7 @@ public:
 	bool InstrWrite(CString, CString);
 	bool InstrRead(CString, CString*);
 	void OnConnect();
-	void OnSend();
+	void OnSend(char, signed long int);
 	void OnRead();
 	void UpdateData(bool);
 
@@ -26,6 +26,7 @@ public:
 	CString m_strCommand;
 	CString m_strResult;
 	bool mutex = false;
+	CString strSrc;
 };
 LRESULT WindowProc(HWND, UINT, WPARAM, LPARAM);
 

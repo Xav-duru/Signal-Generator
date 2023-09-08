@@ -11,6 +11,7 @@
 
 using namespace std;
 
+////////////////////////////////////////////////////////////////////// InstrWrite //////////////////////////////////////////////////////////////
 
 bool CDSG3000_DEMO_VCDlg::InstrWrite(CString strAddr, CString strContent) //write function
 {
@@ -50,6 +51,7 @@ bool CDSG3000_DEMO_VCDlg::InstrWrite(CString strAddr, CString strContent) //writ
 
 	return bWriteOK;
 }
+/////////////////////////////////////////////////////////////////// InstrRead ////////////////////////////////////////////////////////////////
 // 2) Encapsulate the read operation of VISA for easier operation.
 bool CDSG3000_DEMO_VCDlg::InstrRead(CString strAddr, CString* pstrResult)
 //Read from the instrument
@@ -85,18 +87,17 @@ bool CDSG3000_DEMO_VCDlg::InstrRead(CString strAddr, CString* pstrResult)
 	status = viClose(defaultRM);
 	(*pstrResult).Format("%s", RecBuf);
 
+	cout << "Result = " << pstrResult << endl;
+
 	cout << "InstrRead Done" << endl;
 
 	return bReadOK;
 }
 
-// Add the control message response codes.
+////////////////////////////////////////////////////////////////// OnConnect ////////////////////////////////////////////////////////////////
 // 1) Connect the instrument
-void CDSG3000_DEMO_VCDlg::OnConnect(CString frequence)
+void CDSG3000_DEMO_VCDlg::OnConnect()
 {
-	// TODO: Add your control notification handler code here
-
-
 	ViStatus status;
 	ViSession defaultRM;
 	char motif[4] = "?*";
@@ -104,86 +105,127 @@ void CDSG3000_DEMO_VCDlg::OnConnect(CString frequence)
 
 	cout << "OnConnect Start" << endl;
 	
-		ViPFindList findList = new unsigned long;
-		ViPUInt32 retcnt = new unsigned long;
-		ViChar instrDesc[1000];
-		CString strSrc = "";
-		CString strInstr = "";
-		unsigned long i = 0;
-		bool bFindDSG = false;
-		status = viOpenDefaultRM(&defaultRM);
-		if (status < VI_SUCCESS)
-		{
-			// Error Initializing VISA...exiting
-			MessageBox(NULL,"No VISA instrument was opened ! ", NULL, MB_OKCANCEL);
-			return;
-		}
-		memset(instrDesc, 0, 1000);
+	ViPFindList findList = new unsigned long;
+	ViPUInt32 retcnt = new unsigned long;
+	ViChar instrDesc[1000];
+	CString strSrc = "";
+	CString strInstr = "";
+	unsigned long i = 0;
+	bool bFindDSG = false;
+	status = viOpenDefaultRM(&defaultRM);
+	if (status < VI_SUCCESS)
+	{
+		// Error Initializing VISA...exiting
+		MessageBox(NULL,"No VISA instrument was opened ! ", NULL, MB_OKCANCEL);
+		return;
+	}
+	memset(instrDesc, 0, 1000);
 
-		// Find resource
-		status = viFindRsrc(defaultRM, expr, findList, retcnt, instrDesc);
-		//cout << "OnConnect step 1" << " status=" << status << " expr=" << expr <<  "retcnt=" << retcnt << " instrDesc=" << instrDesc << endl;
-		for (i = 0; i < (*retcnt); i++)
-		{
-			// Get instrument name
-			strSrc.Format("%s", instrDesc);
-			InstrWrite(strSrc, "*IDN?");
-			::Sleep(200);
-			InstrRead(strSrc, &strInstr);
-			cout << strInstr << endl;
-
-			// If the instrument(resource) belongs to the DSG series then jump out from the loop
-			strInstr.MakeUpper();
-			if (strInstr.Find("DSG") >= 0)
-			{
-				bFindDSG = true;
-				m_strInstrAddr = strSrc;
-				break;
-			}
-			//Find next instrument
-			status = viFindNext(*findList, instrDesc);
-		}
-		if (bFindDSG == false)
-		{
-			MessageBox(NULL,"Didn't find any DSG!",NULL, MB_OKCANCEL);
-		}
-		UpdateData(false);
-		CString FREQUENCY = ":FREQ ";
-		CString GIGAHERTZ = "GHz";
-		CString REQUEST = FREQUENCY + frequence + GIGAHERTZ;
-		cout << REQUEST << endl;
-
+	// Find resource
+	status = viFindRsrc(defaultRM, expr, findList, retcnt, instrDesc);
+	
+	//cout << "OnConnect step 1" << " status=" << status << " expr=" << expr <<  "retcnt=" << retcnt << " instrDesc=" << instrDesc << endl;
+	for (i = 0; i < (*retcnt); i++)
+	{
+		// Get instrument name
 		strSrc.Format("%s", instrDesc);
-		InstrWrite(strSrc, REQUEST);
+		InstrWrite(strSrc, "*IDN?");
 		::Sleep(200);
 		InstrRead(strSrc, &strInstr);
-		cout << "Result = " << strInstr << endl;
+		cout << strInstr << endl;
+
+		// If the instrument(resource) belongs to the DSG series then jump out from the loop
+		strInstr.MakeUpper();
+		
+		if (strInstr.Find("DSG") >= 0)
+		{
+			bFindDSG = true;
+			m_strInstrAddr = strSrc;
+			cout << "m_strInstrAddr = " << m_strInstrAddr << endl;
+			break;
+		}
+		
+		//Find next instrument
+		status = viFindNext(*findList, instrDesc);
+	}
+	
+	if (bFindDSG == false)
+	{
+		MessageBox(NULL,"Didn't find any DSG!",NULL, MB_OKCANCEL);
+	}
+	UpdateData(false);
+		
+	strSrc.Format("%s", instrDesc);
+	InstrWrite(strSrc, ":SYST:PRES");
+	::Sleep(200);
+	InstrRead(strSrc, &strInstr);
+	cout << "Result = " << strInstr << endl;
 	//*strSrc = "USB0";
 	cout << "OnConnect Done" << endl;
 }
 // 2) Write Operation
 
-
-void CDSG3000_DEMO_VCDlg::OnSend()
+/////////////////////////////////////////////////////////////////////// OnSend ///////////////////////////////////////////////////////////////
+void CDSG3000_DEMO_VCDlg::OnSend(char frequency, signed lont int level)
 {
-	// TODO: Add your control notification handler code here
-	UpdateData(true);
-	if (m_strInstrAddr.IsEmpty())
-	{
-		MessageBox(NULL, "Please connect to the instrument first!", NULL, MB_OKCANCEL);
-	}
-	//InstrWrite(m_strInstrAddr, command);
-	m_strResult.Empty();
-	UpdateData(false);
-}
+	cout << "OnSend Start" << endl;
 
+	ViStatus status;
+	ViSession defaultRM;
+	char motif[4] = "?*";
+	ViString expr = motif;
+
+	ViPFindList findList = new unsigned long;
+	ViPUInt32 retcnt = new unsigned long;
+	ViChar instrDesc[1000];
+	CString strSrc = "";
+	CString strInstr = "";
+	unsigned long i = 0;
+	bool bFindDSG = false;
+	status = viOpenDefaultRM(&defaultRM);
+	
+	memset(instrDesc, 0, 1000);
+
+	status = viFindRsrc(defaultRM, expr, findList, retcnt, instrDesc);
+
+	/* Send frequency */
+	CString FREQUENCY = ":FREQ ";
+	CString GIGAHERTZ = "GHz";
+	CString REQUEST_FREQUENCY = FREQUENCY + frequency + GIGAHERTZ;
+	cout << REQUEST_FREQUENCY << endl;
+	strSrc.Format("%s", instrDesc);
+
+	InstrWrite(strSrc, REQUEST_FREQUENCY);
+	::Sleep(200);
+	InstrRead(strSrc, &strInstr);
+	cout << "Result = " << strInstr << endl;
+
+	/* Send level */
+	CString LEVEL = ":LEV -";
+	CString REQUEST_LEVEL = LEVEL + level;
+	cout << REQUEST_LEVEL << endl;
+
+	InstrWrite(strSrc, REQUEST_LEVEL);
+	::Sleep(200);
+	InstrRead(strSrc, &strInstr);
+	cout << "Result = " << strInstr << endl;
+
+	cout << "OnSend Done" << endl;
+
+}
+///////////////////////////////////////////////////////////////////// OnRead /////////////////////////////////////////////////////////////////
 // 3) Read Operation
 void CDSG3000_DEMO_VCDlg::OnRead()
 {
-	// TODO: Add your control notification handler code here
+	cout << "OnRead Start" << endl;
+	CString strInstr = "";
 	UpdateData(true);
-	InstrRead(m_strInstrAddr, &m_strResult);
+	InstrRead(strSrc, &strInstr);
+	cout << "strInstr = " << strInstr << endl;
+
 	UpdateData(false);
+	cout << "OnRead Done" << endl;
+
 }
 void CDSG3000_DEMO_VCDlg::UpdateData(bool ordre)
 {
@@ -197,19 +239,24 @@ void CDSG3000_DEMO_VCDlg::UpdateData(bool ordre)
 	}
 }
 
-
+////////////////////////////////////////////////////////////// MAIN //////////////////////////////////////////////////////////////////////////
 int main()
 {
 	CDSG3000_DEMO_VCDlg generator;
 	
-	char x;
-    cout << "Type a number: "; // Type a number and press enter
-	cin >> x; // Get user input from the keyboard
-	cout << "Your number is: " << x;	
+	char frequency;
+    cout << "Give me the frequency "; // Type the frequency and press enter
+	cin >> frequency; // Get user input from the keyboard
+	cout << "frequency: " << frequency;	
+
+	signed long int level;
+	cout << "Give me the level "; // Type the level and press enter
+	cin >> level; // Get user input from the keyboard
+	cout << "Level: " << level;
 	//CString cs_USB_address = "";
 
-	// Utiliser x en paramètre d'entrée pour OnConnect ?
-	generator.OnConnect(x);
+	generator.OnConnect();
+	generator.OnSend(frequency, level);
 
 	return 0;
 }
