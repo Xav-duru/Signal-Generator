@@ -92,7 +92,7 @@ bool CDSG3000_DEMO_VCDlg::InstrRead(CString strAddr, CString* pstrResult)
 
 // Add the control message response codes.
 // 1) Connect the instrument
-void CDSG3000_DEMO_VCDlg::OnConnect()
+void CDSG3000_DEMO_VCDlg::OnConnect(CString frequence)
 {
 	// TODO: Add your control notification handler code here
 
@@ -148,9 +148,13 @@ void CDSG3000_DEMO_VCDlg::OnConnect()
 			MessageBox(NULL,"Didn't find any DSG!",NULL, MB_OKCANCEL);
 		}
 		UpdateData(false);
+		CString FREQUENCY = ":FREQ ";
+		CString GIGAHERTZ = "GHz";
+		CString REQUEST = FREQUENCY + frequence + GIGAHERTZ;
+		cout << REQUEST << endl;
 
 		strSrc.Format("%s", instrDesc);
-		InstrWrite(strSrc, ":TRIGger:PULSe[:IMMediate]");
+		InstrWrite(strSrc, REQUEST);
 		::Sleep(200);
 		InstrRead(strSrc, &strInstr);
 		cout << "Result = " << strInstr << endl;
@@ -193,19 +197,23 @@ void CDSG3000_DEMO_VCDlg::UpdateData(bool ordre)
 	}
 }
 
-/*
+
 int main()
 {
 	CDSG3000_DEMO_VCDlg generator;
-	int x;
+	
+	char x;
     cout << "Type a number: "; // Type a number and press enter
 	cin >> x; // Get user input from the keyboard
-	cout << "Your number is: " << x;	//CString cs_USB_address = "";
+	cout << "Your number is: " << x;	
+	//CString cs_USB_address = "";
+
 	// Utiliser x en paramètre d'entrée pour OnConnect ?
-	generator.OnConnect();
+	generator.OnConnect(x);
+
 	return 0;
 }
-*/
+
 
 /*
 LRESULT WindowProc(HWND phwnd, UINT upMsg, WPARAM pwParam, LPARAM plParam)
