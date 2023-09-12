@@ -17,9 +17,14 @@ public:
 	bool InstrWrite(CString, CString);
 	bool InstrRead(CString, CString*);
 	void OnConnect();
-	void OnSend(char, signed long int);
+	void OnSendFreLev(CString, CString);
+	void OnSendCommand(CString);
 	void OnRead();
 	void UpdateData(bool);
+	CString getFrequency();
+	CString getLevel();
+
+
 
 
 	CString m_strInstrAddr;

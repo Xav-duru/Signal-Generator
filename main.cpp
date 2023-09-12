@@ -1,3 +1,18 @@
+
+// Encapsulate the read and write operations of VISA.
+// 1) Encapsulate the write operation of VISA for easier operation.
+
+#include <iostream>
+#include "CDSG3000_DEMO_VCDlg.h"
+#include <WinUser.h>
+#include <format>
+
+
+
+
+
+
+
 #include "CDSG3000_DEMO_VCDlg.h"
 #include <iostream>
 #include <WinUser.h>
@@ -34,8 +49,9 @@ HFONT m_hFont = NULL;
 HWND  m_hWndParent = NULL;
 HWND  m_hWndInputBox = NULL;
 HWND  m_hWndPrompt = NULL;
-HWND  m_hWndText = NULL;
+HWND  m_hWndShowConnect = NULL;
 HWND  m_hWndEdit = NULL;
+HWND  m_hWndConnect = NULL;
 HWND  m_hWndOK = NULL;
 HWND  m_hWndCancel = NULL;
 HBRUSH hbrBkgnd = NULL;
@@ -48,7 +64,7 @@ HBRUSH hbrBkgnd = NULL;
 #define BUTTON_HEIGHT	25 * ASPECT_RATIO_Y
 #define BUTTON_WIDTH	120 * ASPECT_RATIO_X
 // #define FONT_HEIGHT		20 * ASPECT_RATIO_Y
-#define FONT_HEIGHT		35
+#define FONT_HEIGHT		25
 #define TOP_EDGE        5
 #define ASPECT_RATIO_X  2
 #define ASPECT_RATIO_Y  3
@@ -60,12 +76,27 @@ HBRUSH hbrBkgnd = NULL;
 wchar_t m_String[320];
 int cpt = 0;
 LPWSTR GetString(LPCTSTR, LPCTSTR, LPCTSTR);
+
+////////////////////////////////////////////////////////////// MAIN //////////////////////////////////////////////////////////////////////////
+
 int main()
 {
-
-
 	std::cout << "Debut du main " << endl;
+
+	CString CSFrequency;
+	CString CSLevel;
+
+
 	CDSG3000_DEMO_VCDlg proto;
+	proto.OnConnect();
+	CSFrequency = proto.getFrequency();
+	CSLevel = proto.getLevel();
+
+	cout << "------------------------" << endl;
+
+	cout << "Frequency : " << CSFrequency << endl;
+	cout << "Level : " << CSLevel << endl;
+	proto.OnSendFreLev(CSFrequency, CSLevel);
 	//		wprintf(L"Testing the InputBox static lib\n");
 	LPWSTR result = GetString((LPCSTR)L"Code Project Demo - by Michael Haephrati", (LPCSTR)L"What is your name", (LPCSTR)L"My name is Michael");
 	wprintf(L"User entered '%s'\n", result);
@@ -74,6 +105,8 @@ int main()
 	std::cout << "avant sleep du main " << endl;
 	Sleep(10);
 	std::cout << "Fin du main " << endl;
+
+	return 0;
 }
 
 ///////////////////////////////////////////////////////////////////
@@ -141,9 +174,6 @@ LPWSTR GetString(LPCTSTR szCaption, LPCTSTR szPrompt, LPCTSTR szDefaultText = (L
 	// Set default button
 	SendMessage((HWND)m_hWndOK, BM_SETSTYLE,
 		(WPARAM)LOWORD(BS_DEFPUSHBUTTON), MAKELPARAM(TRUE, 0));
-	SendMessage((HWND)m_hWndText, BM_SETSTYLE,
-		(WPARAM)LOWORD(BS_DEFPUSHBUTTON), MAKELPARAM(TRUE, 0));
-
 	SendMessage((HWND)m_hWndCancel, BM_SETSTYLE,
 		(WPARAM)LOWORD(BS_PUSHBUTTON), MAKELPARAM(TRUE, 0));
 	std::cout << "set default button " << GetLastError() << std::endl;
@@ -207,7 +237,7 @@ LPWSTR GetString(LPCTSTR szCaption, LPCTSTR szPrompt, LPCTSTR szDefaultText = (L
 LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
 	cpt++;
-	//std::cout << "callback entry = " << cpt << " msg= " << message << " hWnd = " << hWnd << std::endl;
+	// std::cout << "callback entry = " << cpt << " msg= " << message << " hWnd = " << hWnd << std::endl;
 	LOGFONT lfont;
 	HINSTANCE m_hInst = NULL;
 	switch (message)
@@ -244,24 +274,11 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 		// 
 		m_hInst = GetModuleHandle(NULL);
 		std::cout << "callback creation nelle fenetre" << endl;
-
-		// The title
-		m_hWndText = CreateWindowEx(WS_EX_STATICEDGE,
-			TEXT("button"), TEXT("Send command"),
-			WS_VISIBLE | WS_CHILD | WS_TABSTOP,
-			5, TOP_EDGE + 100 /* + BUTTON_HEIGHT * 2 + 30*/, INPUTBOX_WIDTH - 500, TEXTEDIT_HEIGHT,
-			hWnd,
-			NULL,
-			m_hInst,
-			NULL);
-
-
-
 		// The TextEdit Control - For the text to be input
 		m_hWndEdit = CreateWindowEx(WS_EX_STATICEDGE,
 			TEXT("Edit"), (LPCSTR)L"",
 			WS_VISIBLE | WS_CHILD | WS_TABSTOP | ES_AUTOHSCROLL,
-			5, TOP_EDGE + 100 /* + BUTTON_HEIGHT * 2 + 30*/, INPUTBOX_WIDTH - 500, TEXTEDIT_HEIGHT,
+			5, TOP_EDGE /* + BUTTON_HEIGHT * 2 + 30*/, INPUTBOX_WIDTH - 500, TEXTEDIT_HEIGHT,
 			hWnd,
 			NULL,
 			m_hInst,
@@ -276,12 +293,54 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 		}
 
 		SetFontToControl(m_hWndEdit);
+		/*
+		// The SG_InputBox Caption Static text
+		m_hWndShowConnect = CreateWindowEx(WS_EX_STATICEDGE,
+			TEXT("static"), (LPCSTR)L"",
+			WS_VISIBLE | WS_CHILD,
+			50, TOP_EDGE + 15, INPUTBOX_WIDTH - BUTTON_WIDTH - 250, BUTTON_HEIGHT * 2 + TOP_EDGE,
+			hWnd,
+			NULL,
+			m_hInst,
+			NULL);
+
+		if (m_hWndPrompt == NULL)
+		{
+			std::cout << "callback CreateWindowEx static = " << GetLastError() << std::endl;
+			REPORTERROR;
+			return NULL;
+		}
+
+		// setting font
+		SetFontToControl(m_hWndPrompt);
+		SetFocus(m_hWndEdit);
+
+		*/
+
+		// The Connect button
+		m_hWndConnect = CreateWindowEx(WS_EX_STATICEDGE,
+			TEXT("button"), TEXT("Connect"),
+			WS_VISIBLE | WS_CHILD | WS_TABSTOP,
+			INPUTBOX_WIDTH - BUTTON_WIDTH - 30, TOP_EDGE, BUTTON_WIDTH, BUTTON_HEIGHT,
+			hWnd,
+			NULL,
+			m_hInst,
+			NULL);
+
+		if (m_hWndConnect == NULL)
+		{
+			std::cout << "callback CreateWindowEx BUTTON = " << GetLastError() << std::endl;
+			//	REPORTERROR;
+			return NULL;
+		}
+		// setting font
+		SetFontToControl(m_hWndConnect);
 
 		// The Confirm button
 		m_hWndOK = CreateWindowEx(WS_EX_STATICEDGE,
 			TEXT("button"), TEXT("Send command"),
 			WS_VISIBLE | WS_CHILD | WS_TABSTOP,
-			INPUTBOX_WIDTH - BUTTON_WIDTH - 30, TOP_EDGE, BUTTON_WIDTH, BUTTON_HEIGHT,
+			INPUTBOX_WIDTH - BUTTON_WIDTH - 30, TOP_EDGE + BUTTON_HEIGHT + 15, BUTTON_WIDTH, BUTTON_HEIGHT,
 			hWnd,
 			NULL,
 			m_hInst,
@@ -300,7 +359,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 		m_hWndCancel = CreateWindowEx(WS_EX_STATICEDGE,
 			TEXT("button"), TEXT("Cancel"),
 			WS_VISIBLE | WS_CHILD | WS_TABSTOP,
-			INPUTBOX_WIDTH - BUTTON_WIDTH - 30, TOP_EDGE + BUTTON_HEIGHT + 15, BUTTON_WIDTH, BUTTON_HEIGHT,
+			INPUTBOX_WIDTH - BUTTON_WIDTH - 30, TOP_EDGE + 2 * BUTTON_HEIGHT + 2 * 15, BUTTON_WIDTH, BUTTON_HEIGHT,
 			hWnd,
 			NULL,
 			m_hInst,
