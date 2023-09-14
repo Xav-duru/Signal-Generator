@@ -16,16 +16,14 @@ class CDSG3000_DEMO_VCDlg
 public:
 	bool InstrWrite(CString, CString);
 	bool InstrRead(CString, CString*);
-	void OnConnect();
-	void OnSendFreLev(CString, CString);
+	void OnConnect(CString&);
+	void OnSendFreAmp(CString, CString);
 	void OnSendCommand(CString);
-	void OnRead();
+	void OnRead(CString);
 	void UpdateData(bool);
 	CString getFrequency();
-	CString getLevel();
-
-
-
+	CString getAmplitude();
+	CString getCommand();
 
 	CString m_strInstrAddr;
 	CString m_strCommand;

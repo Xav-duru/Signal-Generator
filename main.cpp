@@ -7,12 +7,6 @@
 #include <WinUser.h>
 #include <format>
 
-
-
-
-
-
-
 #include "CDSG3000_DEMO_VCDlg.h"
 #include <iostream>
 #include <WinUser.h>
@@ -29,11 +23,13 @@
 #include <iostream>
 using namespace std;
 
+/*
 class SG_InputBox
 {
 public:
 	static LPWSTR GetString(LPCTSTR szCaption, LPCTSTR szPrompt, LPCTSTR szDefaultText = (LPCSTR)L"");
 };
+*/
 
 LRESULT CALLBACK WndProc(HWND hWnd, UINT Message, WPARAM wParam, LPARAM lParam);
 void setTextAlignment(HWND, int);
@@ -75,6 +71,9 @@ HBRUSH hbrBkgnd = NULL;
 #define SetFontToControl(n)			SendMessage((n), WM_SETFONT, (WPARAM)m_hFont, 0);
 wchar_t m_String[320];
 int cpt = 0;
+CString USB_adress;
+static CDSG3000_DEMO_VCDlg proto;
+
 LPWSTR GetString(LPCTSTR, LPCTSTR, LPCTSTR);
 
 ////////////////////////////////////////////////////////////// MAIN //////////////////////////////////////////////////////////////////////////
@@ -82,23 +81,27 @@ LPWSTR GetString(LPCTSTR, LPCTSTR, LPCTSTR);
 int main()
 {
 	std::cout << "Debut du main " << endl;
-
+	
 	CString CSFrequency;
-	CString CSLevel;
+	CString CSAmplitude;
+	CString CSCommand;
 
 
-	CDSG3000_DEMO_VCDlg proto;
-	proto.OnConnect();
+	proto.OnConnect(USB_adress);
+	/*
 	CSFrequency = proto.getFrequency();
-	CSLevel = proto.getLevel();
+	CSAmplitude = proto.getAmplitude();
+	CSCommand = proto.getCommand();
 
 	cout << "------------------------" << endl;
 
 	cout << "Frequency : " << CSFrequency << endl;
-	cout << "Level : " << CSLevel << endl;
-	proto.OnSendFreLev(CSFrequency, CSLevel);
+	cout << "Amplitude : " << CSAmplitude << endl;
+	proto.OnSendFreAmp(CSFrequency, CSAmplitude);
+	proto.OnSendCommand(CSCommand);
+	*/
 	//		wprintf(L"Testing the InputBox static lib\n");
-	LPWSTR result = GetString((LPCSTR)L"Code Project Demo - by Michael Haephrati", (LPCSTR)L"What is your name", (LPCSTR)L"My name is Michael");
+	LPWSTR result = GetString((LPCSTR)L"Signal Generator - by Xavier Durumain", (LPCSTR)L"Result", (LPCSTR)L"Write your request");
 	wprintf(L"User entered '%s'\n", result);
 	printf("contenu=  %s\n", result);
 
@@ -167,7 +170,8 @@ LPWSTR GetString(LPCTSTR szCaption, LPCTSTR szPrompt, LPCTSTR szDefaultText = (L
 
 	// Set test alignment
 	setTextAlignment(m_hWndPrompt, SS_CENTER);
-	SetWindowText(m_hWndPrompt, (LPCSTR)L"What is your name");
+	char temp[50] = "USB0 default";  //OK
+	SetWindowText(m_hWndPrompt, (LPCSTR)temp);
 	setTextAlignment(m_hWndEdit, SS_CENTER);
 	SetForegroundWindow(m_hWndInputBox);
 
@@ -198,6 +202,8 @@ LPWSTR GetString(LPCTSTR szCaption, LPCTSTR szPrompt, LPCTSTR szDefaultText = (L
 
 	while (GetMessage(&msg, NULL, 0, 0))
 	{
+		hWndFocused = GetFocus();
+
 		if (msg.message == WM_KEYDOWN)
 		{
 			if (msg.wParam == VK_ESCAPE)
@@ -207,14 +213,22 @@ LPWSTR GetString(LPCTSTR szCaption, LPCTSTR szPrompt, LPCTSTR szDefaultText = (L
 			}
 			if (msg.wParam == VK_RETURN)
 			{
-				int nCount = GetWindowTextLength(m_hWndEdit);
-				nCount++;
-				GetWindowText(m_hWndEdit, (LPSTR)&m_String, nCount);
-				std::cout << "nCount = " << nCount << endl;
-				std::cout << "@input = " << m_String << " val= " << *m_String << endl;
-				printf("contenu=  %s\n", m_String);
-				SendMessage(m_hWndInputBox, WM_DESTROY, 0, 0);
-				ret = 1;
+				if (hWndFocused == m_hWndConnect) {
+					proto.OnConnect(USB_adress);
+					cout << "USB_adress :" << USB_adress << endl;
+					//char temp[50] = USB_adress;
+					SetWindowText(m_hWndShowConnect, (LPCSTR)USB_adress);
+				}
+				else {
+					int nCount = GetWindowTextLength(m_hWndEdit);
+					nCount++;
+					GetWindowText(m_hWndEdit, (LPSTR)&m_String, nCount);
+					std::cout << "nCount = " << nCount << endl;
+					std::cout << "@input = " << m_String << " val= " << *m_String << endl;
+					printf("contenu=  %s\n", m_String);
+					SendMessage(m_hWndInputBox, WM_DESTROY, 0, 0);
+					ret = 1;
+				}
 			}
 			if (msg.wParam == VK_TAB)
 			{
@@ -223,6 +237,8 @@ LPWSTR GetString(LPCTSTR szCaption, LPCTSTR szPrompt, LPCTSTR szDefaultText = (L
 				if (hWndFocused == m_hWndOK) SetFocus(m_hWndCancel);
 				if (hWndFocused == m_hWndCancel) SetFocus(m_hWndEdit);
 			}
+
+
 
 		}
 		TranslateMessage(&msg);
@@ -274,37 +290,18 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 		// 
 		m_hInst = GetModuleHandle(NULL);
 		std::cout << "callback creation nelle fenetre" << endl;
-		// The TextEdit Control - For the text to be input
-		m_hWndEdit = CreateWindowEx(WS_EX_STATICEDGE,
-			TEXT("Edit"), (LPCSTR)L"",
-			WS_VISIBLE | WS_CHILD | WS_TABSTOP | ES_AUTOHSCROLL,
-			5, TOP_EDGE /* + BUTTON_HEIGHT * 2 + 30*/, INPUTBOX_WIDTH - 500, TEXTEDIT_HEIGHT,
-			hWnd,
-			NULL,
-			m_hInst,
-			NULL);
-		std::cout << "callback CreateWindowEx = " << "hwnd " << m_hWndEdit << "error" << GetLastError() << std::endl;
-
-
-		if (m_hWndEdit == NULL)
-		{
-			REPORTERROR;
-			return NULL;
-		}
-
-		SetFontToControl(m_hWndEdit);
-		/*
-		// The SG_InputBox Caption Static text
+		
+		// The OnConnect confirmation
 		m_hWndShowConnect = CreateWindowEx(WS_EX_STATICEDGE,
-			TEXT("static"), (LPCSTR)L"",
+			TEXT("static"), (LPCSTR)L"Connecte",
 			WS_VISIBLE | WS_CHILD,
-			50, TOP_EDGE + 15, INPUTBOX_WIDTH - BUTTON_WIDTH - 250, BUTTON_HEIGHT * 2 + TOP_EDGE,
+			50, 50, INPUTBOX_WIDTH - BUTTON_WIDTH - 250, BUTTON_HEIGHT,
 			hWnd,
 			NULL,
 			m_hInst,
-			NULL);
+			NULL);	
 
-		if (m_hWndPrompt == NULL)
+		if (m_hWndShowConnect == NULL)
 		{
 			std::cout << "callback CreateWindowEx static = " << GetLastError() << std::endl;
 			REPORTERROR;
@@ -315,13 +312,11 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 		SetFontToControl(m_hWndPrompt);
 		SetFocus(m_hWndEdit);
 
-		*/
-
 		// The Connect button
 		m_hWndConnect = CreateWindowEx(WS_EX_STATICEDGE,
 			TEXT("button"), TEXT("Connect"),
 			WS_VISIBLE | WS_CHILD | WS_TABSTOP,
-			INPUTBOX_WIDTH - BUTTON_WIDTH - 30, TOP_EDGE, BUTTON_WIDTH, BUTTON_HEIGHT,
+			INPUTBOX_WIDTH - BUTTON_WIDTH - 50, 50, BUTTON_WIDTH, BUTTON_HEIGHT,
 			hWnd,
 			NULL,
 			m_hInst,
@@ -336,11 +331,34 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 		// setting font
 		SetFontToControl(m_hWndConnect);
 
+
+		// The TextEdit Control - For the text to be input
+		m_hWndEdit = CreateWindowEx(WS_EX_STATICEDGE,
+			TEXT("Edit"), (LPCSTR)L"",
+			WS_VISIBLE | WS_CHILD | WS_TABSTOP | ES_AUTOHSCROLL,
+			50, 165, INPUTBOX_WIDTH - BUTTON_WIDTH - 250, TEXTEDIT_HEIGHT,
+			hWnd,
+			NULL,
+			m_hInst,
+			NULL);
+		std::cout << "callback CreateWindowEx = " << "hwnd " << m_hWndEdit << "error" << GetLastError() << std::endl;
+
+
+		if (m_hWndEdit == NULL)
+		{
+			REPORTERROR;
+			return NULL;
+		}
+
+		SetFontToControl(m_hWndEdit);
+
+
+		
 		// The Confirm button
 		m_hWndOK = CreateWindowEx(WS_EX_STATICEDGE,
 			TEXT("button"), TEXT("Send command"),
 			WS_VISIBLE | WS_CHILD | WS_TABSTOP,
-			INPUTBOX_WIDTH - BUTTON_WIDTH - 30, TOP_EDGE + BUTTON_HEIGHT + 15, BUTTON_WIDTH, BUTTON_HEIGHT,
+			INPUTBOX_WIDTH - BUTTON_WIDTH - 50, 165, BUTTON_WIDTH, TEXTEDIT_HEIGHT,
 			hWnd,
 			NULL,
 			m_hInst,
@@ -355,31 +373,13 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 		// setting font
 		SetFontToControl(m_hWndOK);
 
-		// The Cancel button
-		m_hWndCancel = CreateWindowEx(WS_EX_STATICEDGE,
-			TEXT("button"), TEXT("Cancel"),
-			WS_VISIBLE | WS_CHILD | WS_TABSTOP,
-			INPUTBOX_WIDTH - BUTTON_WIDTH - 30, TOP_EDGE + 2 * BUTTON_HEIGHT + 2 * 15, BUTTON_WIDTH, BUTTON_HEIGHT,
-			hWnd,
-			NULL,
-			m_hInst,
-			NULL);
-
-		if (m_hWndCancel == NULL)
-		{
-			std::cout << "callback CreateWindowEx cancel BUTTON = " << GetLastError() << std::endl;
-			REPORTERROR;
-			return NULL;
-		}
-
-		// setting font
-		SetFontToControl(m_hWndCancel);
+		
 
 		// The SG_InputBox Caption Static text
 		m_hWndPrompt = CreateWindowEx(WS_EX_STATICEDGE,
 			TEXT("static"), (LPCSTR)L"",
 			WS_VISIBLE | WS_CHILD,
-			50, TOP_EDGE + 200, INPUTBOX_WIDTH - BUTTON_WIDTH - 250, BUTTON_HEIGHT * 2 + TOP_EDGE,
+			50, 300, INPUTBOX_WIDTH - BUTTON_WIDTH - 250, BUTTON_HEIGHT,
 			hWnd,
 			NULL,
 			m_hInst,
@@ -395,6 +395,26 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 		// setting font
 		SetFontToControl(m_hWndPrompt);
 		SetFocus(m_hWndEdit);
+
+		// The Cancel button
+		m_hWndCancel = CreateWindowEx(WS_EX_STATICEDGE,
+			TEXT("button"), TEXT("Cancel"),
+			WS_VISIBLE | WS_CHILD | WS_TABSTOP,
+			INPUTBOX_WIDTH - BUTTON_WIDTH - 50, 300, BUTTON_WIDTH, BUTTON_HEIGHT,
+			hWnd,
+			NULL,
+			m_hInst,
+			NULL);
+
+		if (m_hWndCancel == NULL)
+		{
+			std::cout << "callback CreateWindowEx cancel BUTTON = " << GetLastError() << std::endl;
+			REPORTERROR;
+			return NULL;
+		}
+
+		// setting font
+		SetFontToControl(m_hWndCancel);
 
 		break;
 
@@ -415,6 +435,8 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 		{
 
 		case BN_CLICKED:
+			if ((HWND)lParam == m_hWndConnect)
+				PostMessage(m_hWndConnect, WM_KEYDOWN, VK_RETURN, 0);
 			if ((HWND)lParam == m_hWndOK)
 				PostMessage(m_hWndInputBox, WM_KEYDOWN, VK_RETURN, 0);
 			if ((HWND)lParam == m_hWndCancel)

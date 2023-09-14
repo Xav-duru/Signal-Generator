@@ -87,7 +87,7 @@ bool CDSG3000_DEMO_VCDlg::InstrRead(CString strAddr, CString* pstrResult)
 	status = viClose(defaultRM);
 	(*pstrResult).Format("%s", RecBuf);
 
-	// cout << "Result = " << pstrResult << endl;
+	cout << "Result : " << *pstrResult;
 
 	cout << "InstrRead Done" << endl;
 
@@ -96,7 +96,7 @@ bool CDSG3000_DEMO_VCDlg::InstrRead(CString strAddr, CString* pstrResult)
 
 ////////////////////////////////////////////////////////////////// OnConnect ////////////////////////////////////////////////////////////////
 // 1) Connect the instrument
-void CDSG3000_DEMO_VCDlg::OnConnect()
+void CDSG3000_DEMO_VCDlg::OnConnect(CString &strInstr)
 {
 	ViStatus status;
 	ViSession defaultRM;
@@ -109,7 +109,6 @@ void CDSG3000_DEMO_VCDlg::OnConnect()
 	ViPUInt32 retcnt = new unsigned long;
 	ViChar instrDesc[1000];
 	CString strSrc = "";
-	CString strInstr = "";
 	unsigned long i = 0;
 	bool bFindDSG = false;
 	status = viOpenDefaultRM(&defaultRM);
@@ -130,9 +129,8 @@ void CDSG3000_DEMO_VCDlg::OnConnect()
 		// Get instrument name
 		strSrc.Format("%s", instrDesc);
 		InstrWrite(strSrc, "*IDN?");
-		::Sleep(200);
 		InstrRead(strSrc, &strInstr);
-		cout << strInstr << endl;
+		cout << "strInstr : " << strInstr << endl;
 
 		// If the instrument(resource) belongs to the DSG series then jump out from the loop
 		strInstr.MakeUpper();
@@ -141,7 +139,7 @@ void CDSG3000_DEMO_VCDlg::OnConnect()
 		{
 			bFindDSG = true;
 			m_strInstrAddr = strSrc;
-			cout << "m_strInstrAddr = " << m_strInstrAddr << endl;
+			//cout << "m_strInstrAddr = " << m_strInstrAddr << endl;
 			break;
 		}
 		
@@ -154,22 +152,26 @@ void CDSG3000_DEMO_VCDlg::OnConnect()
 		MessageBox(NULL,"Didn't find any DSG!",NULL, MB_OKCANCEL);
 	}
 	UpdateData(false);
-		
+
+
+	
+	/*
 	cout << "------- Initiate values -------";
 	strSrc.Format("%s", instrDesc);
+	cout << endl << "request sent --> :SYST:PRES" << endl;
 	InstrWrite(strSrc, ":SYST:PRES");
-	::Sleep(200);
 	InstrRead(strSrc, &strInstr);
 
-	cout << "Read frequency: ";
-	InstrWrite(strSrc, ":FRE?");
-	::Sleep(200);
+	// Read Frequency
+	cout << endl << "request sent --> :FREQ?" << endl;
+	InstrWrite(strSrc, ":FREQ?");
 	InstrRead(strSrc, &strInstr);
 
-	cout << "Read level: ";
+	// Read amplitude
+	cout << endl << "request sent --> :LEV?" << endl;
 	InstrWrite(strSrc, ":LEV?");
-	::Sleep(200);
 	InstrRead(strSrc, &strInstr);
+	*/
 
 	//*strSrc = "USB0";
 	cout << "OnConnect Done" << endl;
@@ -177,12 +179,9 @@ void CDSG3000_DEMO_VCDlg::OnConnect()
 // 2) Write Operation
 
 /////////////////////////////////////////////////////////////////////// OnSend ///////////////////////////////////////////////////////////////
-void CDSG3000_DEMO_VCDlg::OnSendFreLev(CString frequency, CString level)
+void CDSG3000_DEMO_VCDlg::OnSendFreAmp(CString frequency, CString amplitude)
 {
 	cout << "OnSend Start" << endl;
-
-	
-
 
 	ViStatus status;
 	ViSession defaultRM;
@@ -202,28 +201,27 @@ void CDSG3000_DEMO_VCDlg::OnSendFreLev(CString frequency, CString level)
 
 	status = viFindRsrc(defaultRM, expr, findList, retcnt, instrDesc);
 
-	/* Send frequency */
+	// Send frequency
 	CString FREQUENCY = ":FREQ ";
 	CString GIGAHERTZ = "GHz";
 	CString REQUEST_FREQUENCY = FREQUENCY + frequency + GIGAHERTZ;
-	cout << "request sent --> " << REQUEST_FREQUENCY << endl;
+	cout << endl << "request sent --> " << REQUEST_FREQUENCY << endl;
 	strSrc.Format("%s", instrDesc);
 
 	InstrWrite(strSrc, REQUEST_FREQUENCY);
 	::Sleep(200);
 	InstrRead(strSrc, &strInstr);
 
-	/* Send level */
-	CString LEVEL = ":LEV -";
-	CString REQUEST_LEVEL = LEVEL + level + "";
-	cout << "request sent --> " << REQUEST_LEVEL << endl;
+	// Send amplitude
+	CString AMPLITUDE = ":LEV -";
+	CString REQUEST_AMPLITUDE = AMPLITUDE + amplitude + "";
+	cout << endl << "request sent --> " << REQUEST_AMPLITUDE << endl;
 
-	InstrWrite(strSrc, REQUEST_LEVEL);
+	InstrWrite(strSrc, REQUEST_AMPLITUDE);
 	::Sleep(200);
 	InstrRead(strSrc, &strInstr);
 
 	cout << "OnSend Done" << endl;
-
 }
 
 void CDSG3000_DEMO_VCDlg::OnSendCommand(CString command) {
@@ -252,7 +250,6 @@ void CDSG3000_DEMO_VCDlg::OnSendCommand(CString command) {
 	strSrc.Format("%s", instrDesc);
 
 	InstrWrite(strSrc, command);
-	::Sleep(200);
 	InstrRead(strSrc, &strInstr);
 
 	cout << "OnSend Done" << endl;
@@ -260,7 +257,7 @@ void CDSG3000_DEMO_VCDlg::OnSendCommand(CString command) {
 
 ///////////////////////////////////////////////////////////////////// OnRead /////////////////////////////////////////////////////////////////
 // 3) Read Operation
-void CDSG3000_DEMO_VCDlg::OnRead()
+void CDSG3000_DEMO_VCDlg::OnRead(CString command)
 {
 	cout << "OnRead Start" << endl;
 	CString strInstr = "";
@@ -311,27 +308,48 @@ CString CDSG3000_DEMO_VCDlg::getFrequency()
 
 }
 
-CString CDSG3000_DEMO_VCDlg::getLevel()
+CString CDSG3000_DEMO_VCDlg::getAmplitude()
 {
 
-	// Ask for level
-	string level;
-	cout << "Give me the level: "; // Type the level and press enter
-	getline(cin, level); // Get user input from the keyboard
-	//cout << "Level: " << level << endl;
+	// Ask for amplitude
+	string amplitude;
+	cout << "Give me the amplitude: "; // Type the amplitude and press enter
+	getline(cin, amplitude); // Get user input from the keyboard
+	//cout << "amplitude: " << amplitude << endl;
 
 	// Convert string to CString
-	const char* stBufLEV = level.c_str();   // 1. string to const char *
+	const char* stBufLEV = amplitude.c_str();   // 1. string to const char *
 	size_t szLEV;                // save converted string's length + 1
 	wchar_t outputLEV[50] = L"";          // return data, result is CString data
 	mbstowcs_s(&szLEV, outputLEV, 50, stBufLEV, 50); // converting function
-	CString CSLevel = outputLEV;
+	CString CSAmplitude = outputLEV;
 
-	//cout << "Level : " << CSLevel << endl;
+	//cout << "amplitude : " << CSAmplitude << endl;
 
-	return CSLevel;
-
+	return CSAmplitude;
 }
+
+CString CDSG3000_DEMO_VCDlg::getCommand()
+{
+
+	// Ask for command
+	string command;
+	cout << "Give me the command: "; // Type the command and press enter
+	getline(cin, command); // Get user input from the keyboard
+	//cout << "command: " << command << endl;
+
+	// Convert string to CString
+	const char* stBufCOM = command.c_str();   // 1. string to const char *
+	size_t szCOM;                // save converted string's length + 1
+	wchar_t outputCOM[50] = L"";          // return data, result is CString data
+	mbstowcs_s(&szCOM, outputCOM, 50, stBufCOM, 50); // converting function
+	CString CSCommand = outputCOM;
+
+	//cout << "command : " << CSCommand << endl;
+
+	return CSCommand;
+}
+
 
 /*
 LRESULT WindowProc(HWND phwnd, UINT upMsg, WPARAM pwParam, LPARAM plParam)
