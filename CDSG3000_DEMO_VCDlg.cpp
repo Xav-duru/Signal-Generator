@@ -224,7 +224,7 @@ void CDSG3000_DEMO_VCDlg::OnSendFreAmp(CString frequency, CString amplitude)
 	cout << "OnSend Done" << endl;
 }
 
-void CDSG3000_DEMO_VCDlg::OnSendCommand(CString command) {
+void CDSG3000_DEMO_VCDlg::OnSendCommand(CString command, CString& strInstr) {
 	cout << "OnSendCommand Start" << endl;
 
 	ViStatus status;
@@ -236,7 +236,7 @@ void CDSG3000_DEMO_VCDlg::OnSendCommand(CString command) {
 	ViPUInt32 retcnt = new unsigned long;
 	ViChar instrDesc[1000];
 	CString strSrc = "";
-	CString strInstr = "";
+	//CString strInstr = "";
 	unsigned long i = 0;
 	bool bFindDSG = false;
 	status = viOpenDefaultRM(&defaultRM);

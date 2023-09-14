@@ -12,7 +12,7 @@
 #include <WinUser.h>
 #include <format>
 #include <Windows.h>
-#ifdef _WIN32
+#ifdef _WIN32	
 #include <Windows.h>
 #else
 #include <unistd.h>
@@ -68,10 +68,11 @@ HBRUSH hbrBkgnd = NULL;
 #define PUSH_BUTTON					L"Button"
 #define FONT_NAME					_T("Times")
 #define TEXTEDIT_CLASS				L"edit"
-#define SetFontToControl(n)			SendMessage((n), WM_SETFONT, (WPARAM)m_hFont, 0);
+#define SetFontToControl(n)			SendMessage((n), WM_SETFONT, (WPARAM)m_hFont, 5);
 wchar_t m_String[320];
 int cpt = 0;
 CString USB_adress;
+CString result = "";
 static CDSG3000_DEMO_VCDlg proto;
 
 LPWSTR GetString(LPCTSTR, LPCTSTR, LPCTSTR);
@@ -219,6 +220,7 @@ LPWSTR GetString(LPCTSTR szCaption, LPCTSTR szPrompt, LPCTSTR szDefaultText = (L
 					//char temp[50] = USB_adress;
 					SetWindowText(m_hWndShowConnect, (LPCSTR)USB_adress);
 				}
+
 				else {
 					int nCount = GetWindowTextLength(m_hWndEdit);
 					nCount++;
@@ -226,7 +228,11 @@ LPWSTR GetString(LPCTSTR szCaption, LPCTSTR szPrompt, LPCTSTR szDefaultText = (L
 					std::cout << "nCount = " << nCount << endl;
 					std::cout << "@input = " << m_String << " val= " << *m_String << endl;
 					printf("contenu=  %s\n", m_String);
-					SendMessage(m_hWndInputBox, WM_DESTROY, 0, 0);
+					CString StringCommand = (LPSTR)m_String;
+					proto.OnSendCommand(StringCommand, result);
+					//SendMessage(m_hWndInputBox, WM_DESTROY, 0, 0);
+					SetWindowText(m_hWndPrompt, result);
+
 					ret = 1;
 				}
 			}
@@ -359,10 +365,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 			TEXT("button"), TEXT("Send command"),
 			WS_VISIBLE | WS_CHILD | WS_TABSTOP,
 			INPUTBOX_WIDTH - BUTTON_WIDTH - 50, 165, BUTTON_WIDTH, TEXTEDIT_HEIGHT,
-			hWnd,
-			NULL,
-			m_hInst,
-			NULL);
+			hWnd,NULL,m_hInst,NULL);
 
 		if (m_hWndOK == NULL)
 		{

@@ -18,7 +18,7 @@ public:
 	bool InstrRead(CString, CString*);
 	void OnConnect(CString&);
 	void OnSendFreAmp(CString, CString);
-	void OnSendCommand(CString);
+	void OnSendCommand(CString, CString&);
 	void OnRead(CString);
 	void UpdateData(bool);
 	CString getFrequency();
