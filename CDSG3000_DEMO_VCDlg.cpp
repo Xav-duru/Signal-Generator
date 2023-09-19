@@ -16,7 +16,6 @@ using namespace std;
 bool CDSG3000_DEMO_VCDlg::InstrWrite(CString strAddr, CString strContent) //write function
 {
 	cout << "InstrWrite Start" << endl;
-
 	ViSession defaultRM, instr;
 	ViStatus status;
 	ViUInt32 retCount;

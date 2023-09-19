@@ -102,7 +102,7 @@ int main()
 	proto.OnSendCommand(CSCommand);
 	*/
 	//		wprintf(L"Testing the InputBox static lib\n");
-	LPWSTR result = GetString((LPCSTR)L"Signal Generator - by Xavier Durumain", (LPCSTR)L"Result", (LPCSTR)L"Write your request");
+	LPWSTR result = GetString((LPCSTR)L"Signal Generator - by Xavier Durumain", (LPCSTR)L"Result", (LPCSTR)L"");
 	wprintf(L"User entered '%s'\n", result);
 	printf("contenu=  %s\n", result);
 
@@ -171,7 +171,7 @@ LPWSTR GetString(LPCTSTR szCaption, LPCTSTR szPrompt, LPCTSTR szDefaultText = (L
 
 	// Set test alignment
 	setTextAlignment(m_hWndPrompt, SS_CENTER);
-	char temp[50] = "USB0 default";  //OK
+	char temp[50] = "";  //OK
 	SetWindowText(m_hWndPrompt, (LPCSTR)temp);
 	setTextAlignment(m_hWndEdit, SS_CENTER);
 	SetForegroundWindow(m_hWndInputBox);
@@ -299,7 +299,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 		
 		// The OnConnect confirmation
 		m_hWndShowConnect = CreateWindowEx(WS_EX_STATICEDGE,
-			TEXT("static"), (LPCSTR)L"Connecte",
+			TEXT("static"), (LPCSTR)L"",
 			WS_VISIBLE | WS_CHILD,
 			50, 50, INPUTBOX_WIDTH - BUTTON_WIDTH - 250, BUTTON_HEIGHT,
 			hWnd,
