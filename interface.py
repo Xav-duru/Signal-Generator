@@ -7,9 +7,10 @@ Created on Thu Sep 21 11:22:49 2023
 
 from tkinter import * 
 from tkinter import ttk
+import tkinter as tk
 
 wnd = Tk()
-wnd.geometry("400x300")
+wnd.geometry("420x300")
 
 
 # Navigation menu
@@ -38,7 +39,7 @@ menubar.add_cascade(label="Aide", menu=menu3)
 wnd.config(menu=menubar)
 
 label = Label(wnd, text="Connect first!")
-label.pack()
+label.grid(row=1)
 
 categories = [
     "Common Commands",
@@ -51,152 +52,197 @@ categories = [
     "UNIT Command"
 ] 
 
+
 common = [
-    "*CLS",
-    "*ESE", 
-    "*ESR?",
-    "*IDN?",
-    "*OPT?",
-    "*PSC",
-    "*RST",
-    "*SRE",
-    "*STB?",
-    "*TRG",
-    "*WAI"
+     "*CLS",
+     "*ESE", 
+     "*ESR?",
+     "*IDN?",
+     "*OPT?",
+     "*PSC",
+     "*RST",
+     "*SRE",
+     "*STB?",
+     "*TRG",
+     "*WAI"
 ]
 
+textExplanation = "Clear all the event registers and the error queue."
 
 
-mmemory = [
-    "MMEMory:CATalog",
-    "MMEMory:CATalog:LENGth"
-    ]
+def Explanation(request):
+    textExplanation = StringVar(wnd)
+    if request=="*CLS":
+        textExplanation = "Clear all the event registers and the error queue."
+    elif request=="*IDN?":
+        textExplanation = "Query the ID character string of the instrument."
+    return textExplanation
 
-output = [
-    "OUTPut[:STATe]"
-    ]
-
-source = [
-    "[SOURce]:AM Command Subsystem",
-    "[SOURce]:CORRection Command Subsystem"    
-    ]
-
-status = [
-    "STATus:OPERation:CONDition",
-    "STATus:OPERation:ENABle"
-    ]
-
-system = [
-    ":SYSTem:BRIGhtness",
-    ":SYSTem:CLEar"
-    ]
-
-trigger = [
-    ":TRIGger:IQ[IMMediate]",
-    ":TRIGger:LFOutput[IMMediate]",
-    ":TRIGger:PULSe[IMMediate]",
-    ":TRIGger:SWEep[IMMediate]"
-    ]
-
-unit = [
-    "UNIT:POWer"
-        ]
-
-
-
+ 
 def switchCategoriesToRequests(category):
+    common = [
+        "*CLS",
+        "*ESE", 
+        "*ESR?",
+        "*IDN?",
+        "*OPT?",
+        "*PSC",
+        "*RST",
+        "*SRE",
+        "*STB?",
+        "*TRG",
+        "*WAI"
+    ]
+        
+    mmemory = [
+        "MMEMory:CATalog",
+        "MMEMory:CATalog:LENGth",
+        "MMEMory:COPY",
+        "MMEMory:DATA:IQ",
+        "MMEMory:DATA:IQ:LIST",
+        "MMEMory:DELete",
+        "MMEMory:DISK:FORMat",
+        "MMEMory:DISK:INFormation",
+        "MMEMory:FILEtype",
+        "MMEMory:LDISk:SPACe",
+        "MMEMory:MDIRectory"
+        ]
+    
+    output = [
+        "OUTPut[:STATe]"
+        ]
+    
+    source = [
+        "[SOURce]:AM Command Subsystem",
+        "[SOURce]:CORRection Command Subsystem"    
+        ]
+    
+    status = [
+        "STATus:OPERation:CONDition",
+        "STATus:OPERation:ENABle"
+        ]
+    
+    system = [
+        ":SYSTem:BRIGhtness",
+        ":SYSTem:CLEar"
+        ]
+    
+    trigger = [
+        ":TRIGger:IQ[IMMediate]",
+        ":TRIGger:LFOutput[IMMediate]",
+        ":TRIGger:PULSe[IMMediate]",
+        ":TRIGger:SWEep[IMMediate]"
+        ]
+    
+    unit = [
+        "UNIT:POWer"
+            ]
+
     match category:
         case "Common Commands":
-            return 'common'
+            return common 
         case "MMEMory Commands":
-            return 'mmemory'
+            return mmemory
         case "OUTPut Command":
-            return 'output'
+            return output
         case "SOURce Commands":
-            return 'source'
+            return source
         case "STATus Commands":
-            return 'status'
+            return status
         case "SYSTem Commands":
-            return 'system'
+            return system
         case "TRIGger Commands":
-            return 'trigger'
+            return trigger
         case "UNIT Command":
-            return 'unit'
+            return unit
+
+    
+def callback1(selection):
+    categorie=var1.get()
+    
+    # Reset var and delete all old options
+    var2.set('')
+    opt2['menu'].delete(0, 'end')
+
+    categorieRequest = switchCategoriesToRequests(categorie)
+    var2.set(categorieRequest[0])
+
+    for common in categorieRequest:
+        opt2['menu'].add_command(label=common, command=tk._setit(var2, common))
         
         
-def choose(category):
-    if category=="Common Commands":
-        return common
-    elif category=="MMEMory Commands":
-        return mmemory
-    elif category=="OUTPut Commands":
-        return output
-    
-def callback(selection):
-    print(variable.get())
-    label['text'] = variable.get()
-    categorie=variable.get()
-    print(switchCategoriesToRequests(categorie))
+def callback2(selection):
+    print(selection)
+    explanation = Explanation(selection)
+    labelExplanation.config(text=explanation)
+        
 
-    variable2.set(switchCategoriesToRequests(categorie[0]))
-    opt2 = OptionMenu(wnd, variable, *categorie)
-    opt2.config(width=90, font=('Helvetica', 12))
-    opt2.pack() 
-    
-    return variable.get()
-    
-variable = StringVar(wnd)
-variable.set(categories[1])
+# dropdown list for categories
+var1 = StringVar(wnd)
+var1.set(categories[0])
 
-variable2 = StringVar(wnd)
+opt1 = OptionMenu(wnd, var1, *categories, command=callback1)
+opt1.config(width=30, font=('Helvetica', 12))
+opt1.grid(row=2, columnspan = 6)
 
-opt = OptionMenu(wnd, variable, *categories, command=callback)
-opt.config(width=90, font=('Helvetica', 12))
-opt.pack()
+# dropdown list for requests
+var2 = StringVar(wnd)
+var2.set(common[0])
+
+opt2 = OptionMenu(wnd, var2, *common, command=callback2)
+opt2.config(width=40, font=('Helvetica', 12))
+opt2.grid(row=3, columnspan = 6)
+
+
+# Line break
+Label(wnd, text="").grid(row=4, column=0)  
+
  
-# label
-text = StringVar()
-label = Label(wnd, text=variable.get(), bg="yellow")
-label.pack()   
+# label Explanation
+labelTitle = Label(wnd, text="Explanations : ", bg="yellow")
+labelTitle.grid(row=5, column=0)  
 
+labelExplanation = Label(wnd, text=textExplanation)
+labelExplanation.grid(row=5, column=1, columnspan= 4)  
 
-#listeCombo = ttk.Combobox(wnd, values=switchCategoriesToRequests(variable.get))
-#listeCombo.current(0)
-#listeCombo.pack()
-
+# Line break
+Label(wnd, text="").grid(row=6, column=0)  
 
 # Write
 btn_write = Button(wnd, text ='Write')
-btn_write.pack(side=LEFT, padx=10, pady=10)
+btn_write.grid(row=7, column=0)
 
 # entrée
 def recupere():
     showinfo("Alerte", entree.get())
 
+# Text zone for request
 value = StringVar()
 value.set("Valeur")
-entree = Entry(wnd, textvariable=value, width=30)
-entree.pack()
+entree = Entry(wnd, textvariable=value, width=10)
+entree.grid(row=7, column=1)
+
+# Choose unit
+Units=["kHz", "MHz","GHz"]
+listUnits = ttk.Combobox(wnd, values=Units, width=5)
+listUnits.current(0)
+listUnits.grid(row=7, column=2)
 
 # Read
 btn_read = Button(wnd, text ='Read')
-btn_read.pack(side=LEFT, padx=10, pady=10)
-
-
-
-
+btn_read.grid(row=8, column=0)
 
 # Connect button
 btn_connect =Button(wnd, text ='OnConnect')
-btn_connect.pack(side=RIGHT)
+btn_connect.grid(row=7, column=5)
 
-
+# Valid button
 btn_valid = Button(wnd, text="Valider", command=recupere)
-btn_valid.pack(side=RIGHT)
+btn_valid.grid(row=8, column=5)
 
-# bouton de sortie
+# Quit button
 bnt_quit=Button(wnd, text="Fermer", command=wnd.quit)
-bnt_quit.pack(side=RIGHT)
+bnt_quit.grid(row=9, column=5)
 
 
 
