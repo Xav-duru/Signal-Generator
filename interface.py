@@ -8,38 +8,20 @@ Created on Thu Sep 21 11:22:49 2023
 from tkinter import * 
 from tkinter import ttk
 import tkinter as tk
+import csv
+import pandas
+
+#lire = pandas.read_csv(r"C:/Users/33667/OneDrive - ESEO/Bureau/ESEO/Suède/Percy Roc/Python\Commands.csv")
+#print(lire)
 
 wnd = Tk()
 wnd.geometry("420x300")
 
 
-# Navigation menu
-def alert():
-    showinfo("alerte", "Bravo!")
 
-menubar = Menu(wnd)
 
-menu1 = Menu(menubar, tearoff=0)
-menu1.add_command(label="Créer", command=alert)
-menu1.add_command(label="Editer", command=alert)
-menu1.add_separator()
-menu1.add_command(label="Quitter", command=wnd.quit)
-menubar.add_cascade(label="Fichier", menu=menu1)
-
-menu2 = Menu(menubar, tearoff=0)
-menu2.add_command(label="Couper", command=alert)
-menu2.add_command(label="Copier", command=alert)
-menu2.add_command(label="Coller", command=alert)
-menubar.add_cascade(label="Editer", menu=menu2)
-
-menu3 = Menu(menubar, tearoff=0)
-menu3.add_command(label="A propos", command=alert)
-menubar.add_cascade(label="Aide", menu=menu3)
-
-wnd.config(menu=menubar)
-
-label = Label(wnd, text="Connect first!")
-label.grid(row=1)
+#label = Label(wnd, text="Connect first!")
+#label.grid(row=1)
 
 categories = [
     "Common Commands",
@@ -175,7 +157,17 @@ def callback2(selection):
     print(selection)
     explanation = Explanation(selection)
     labelExplanation.config(text=explanation)
+    
+def getRequest():
+    request=syntax + entree.get()
+    print(request)
         
+# Title
+labelTitle = Label(wnd, text="Signal generator: RIGOL", font=("Courier", 22), bg="yellow")
+labelTitle.grid(row=0, column=0, columnspan=6)  
+
+# Line break
+Label(wnd, text="").grid(row=1, column=0)  
 
 # dropdown list for categories
 var1 = StringVar(wnd)
@@ -199,7 +191,7 @@ Label(wnd, text="").grid(row=4, column=0)
 
  
 # label Explanation
-labelTitle = Label(wnd, text="Explanations : ", bg="yellow")
+labelTitle = Label(wnd, text="Explanations:")
 labelTitle.grid(row=5, column=0)  
 
 labelExplanation = Label(wnd, text=textExplanation)
@@ -208,40 +200,32 @@ labelExplanation.grid(row=5, column=1, columnspan= 4)
 # Line break
 Label(wnd, text="").grid(row=6, column=0)  
 
-# Write
-btn_write = Button(wnd, text ='Write')
-btn_write.grid(row=7, column=0)
+ 
+# label syntax
+syntax = "syntax:"
+labelSyntax = Label(wnd, text=syntax)
+labelSyntax.grid(row=8, column=0)  
 
-# entrée
-def recupere():
-    showinfo("Alerte", entree.get())
 
 # Text zone for request
 value = StringVar()
-value.set("Valeur")
-entree = Entry(wnd, textvariable=value, width=10)
-entree.grid(row=7, column=1)
+value.set("")
+request = StringVar()
+entree = Entry(wnd, textvariable=value, width=20)
+entree.grid(row=8, column=1)
 
-# Choose unit
-Units=["kHz", "MHz","GHz"]
-listUnits = ttk.Combobox(wnd, values=Units, width=5)
-listUnits.current(0)
-listUnits.grid(row=7, column=2)
 
-# Read
-btn_read = Button(wnd, text ='Read')
-btn_read.grid(row=8, column=0)
 
 # Connect button
-btn_connect =Button(wnd, text ='OnConnect')
+btn_connect =Button(wnd, text ='OnConnect', width=10, padx=5, pady=5)
 btn_connect.grid(row=7, column=5)
 
 # Valid button
-btn_valid = Button(wnd, text="Valider", command=recupere)
+btn_valid = Button(wnd, text="Valider", command=getRequest, width=10, padx=5, pady=5)
 btn_valid.grid(row=8, column=5)
 
 # Quit button
-bnt_quit=Button(wnd, text="Fermer", command=wnd.quit)
+bnt_quit=Button(wnd, text="Fermer", command=wnd.quit, width=10, padx=5, pady=5)
 bnt_quit.grid(row=9, column=5)
 
 
